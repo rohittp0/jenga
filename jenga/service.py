@@ -45,6 +45,11 @@ def get_auth_status(user):
     returns user information of status
     number, verified, memberShipID
     """
+    user = airtable_db.get_member_details(user["memberShipID"])
+
+    if not user :
+        raise InvalidUsage("User not registered", status_code=401)
+
     return jsonify(user)
 
 
@@ -207,6 +212,45 @@ def details(user):
         print(exception)
         raise InvalidUsage(str(e), status_code=417)
 
+
+@app.route("/edit", methods=["POST"])
+@token_required
+def edit_details(user,details):
+    """
+
+    User details updating
+    accepts various details of user like college etc
+    saves it to airtable
+    returns status
+    """
+    number = user.get("number")
+    if number is None or user.get("verified") is None:
+        raise InvalidUsage("Unauthorized access", status_code=401)
+
+    id = airtable_db.check_member_exist(number)
+    if not id:
+        raise InvalidUsage("user dosenot exist", status_code=419)    
+
+    data = request.get_json()
+
+    if data.get("College"):
+        data["College"] = [data["College"]]
+
+    data["MobileNumber"] = int(number)
+    if data.get("My_Skills"):
+        data["My_Skills"] = data.get("My_Skills").strip().split(",")
+
+    try:
+        record = airtable_db.update_member_details(id,data)
+        logging.info(record)
+        return {
+            "message": "Successfully edited"
+        }
+    except requests.HTTPError as exception:
+        e = sys.exc_info()[0]
+        logging.info("Error : %s", str(e))
+        print(exception)
+        raise InvalidUsage(str(e), status_code=417)
 
 """
     Utility Routes

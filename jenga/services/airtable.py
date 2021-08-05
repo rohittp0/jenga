@@ -14,6 +14,9 @@ class AirTableDB:
     def insert_member_details(self, data):
         return self.member_table.insert(data)
 
+    def update_member_details(self, id, data):
+        return self.member_table.update(id, data)    
+
     def get_colleges(self):
         raw_college_list = self.college_table.get_all()
         college_list = [
@@ -42,3 +45,16 @@ class AirTableDB:
             return member[0]["id"]
         else:
             return False
+
+    def get_member_details(self, id):
+        member = self.member_table.get(id)       
+        
+        if not member:
+            return None
+
+        details = { id: member["id"] }
+
+        for key, value in member["fields"].items():
+            details[key] = value
+
+        return details    
